@@ -5,59 +5,50 @@
     <title>Sổ doanh thu S2b-HKD</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        @page { size: A4; margin: 0.8cm; }
-        body { font-family: "Times New Roman", serif; color: black; line-height: 1.2; font-size: 11.5pt; margin: 0; padding: 0; }
+        /* Thiết lập chuẩn in ấn A4 */
+        @page { size: A4; margin: 10mm; }
+        body { font-family: "Times New Roman", serif; color: black; line-height: 1.4; font-size: 11pt; margin: 0; padding: 0; }
         
-        /* ĐIỀU CHỈNH TỶ LỆ CỘT TỐI ƯU */
-        .col-sh { width: 23%; } 
-        .col-ng { width: 13%; } 
-        .col-dg { width: 49%; } 
-        .col-st { width: 15%; } /* Thu hẹp thêm 1% để an toàn cho cột tiền */
+        /* Bảng chính: Bỏ fixed để tự động tối ưu theo chữ */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid black; padding: 6px 4px; word-wrap: break-word; }
+        
+        /* Tỷ lệ cột linh hoạt */
+        .col-sh { width: 18%; }
+        .col-ng { width: 12%; }
+        .col-dg { width: auto; } /* Để diễn giải tự nới rộng */
+        .col-st { width: 16%; white-space: nowrap; } /* Cột tiền không cho xuống dòng */
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
-        
-        th, td { 
-            border: 1px solid black; 
-            padding: 4px 2px; 
-            word-wrap: break-word; 
-            overflow: hidden; 
-        }
-        
         .text-center { text-align: center; }
-        .text-right { text-align: right; padding-right: 3px; } /* Thêm chút đệm phải cho số tiền */
+        .text-right { text-align: right; }
         .bold { font-weight: bold; }
         .italic { font-style: italic; }
         .no-border, .no-border td { border: none !important; }
 
+        /* Giao diện nút bấm */
         .no-print { 
-            position: sticky; top: 0; background: #ffffff; padding: 10px; 
+            position: sticky; top: 0; background: #fff; padding: 15px; 
             border-bottom: 1px solid #ddd; display: flex; gap: 10px; justify-content: center; z-index: 1000;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .btn { 
-            cursor: pointer; padding: 10px 20px; border: none; border-radius: 5px; 
-            font-weight: bold; color: white; font-size: 14px; text-transform: uppercase;
-        }
+        .btn { cursor: pointer; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; color: white; }
+        .btn-download { background: #d9534f; }
         .btn-print { background: #555; }
-        .btn-download { background: #d9534f; } 
-        .btn-send { background: #5bc0de; }
-        .btn:hover { opacity: 0.8; }
 
         @media print { 
             .no-print { display: none; }
-            tfoot { display: table-row-group; } 
+            tfoot { display: table-footer-group; } 
         }
     </style>
 </head>
 <body>
 
     <div class="no-print">
-        <button class="btn btn-print" onclick="window.print()">In trực tiếp</button>
-        <button class="btn btn-download" onclick="downloadPDF()">Tải PDF về máy</button>
-        <button class="btn btn-send" onclick="sendEmail()">Gửi báo cáo</button>
+        <button class="btn btn-download" onclick="downloadPDF()">TẢI PDF (MẪU CHUẨN)</button>
+        <button class="btn btn-print" onclick="window.print()">IN TRỰC TIẾP</button>
     </div>
 
-    <div id="content-to-export" style="padding: 10px;">
+    <div id="content-to-export" style="padding: 10px; background: white;">
         <table class="no-border">
             <tr>
                 <td style="width: 65%;">
@@ -73,7 +64,7 @@
         </table>
 
         <div class="text-center" style="margin-top: 15px;">
-            <h2 style="margin:0; font-size: 16pt;">SỔ DOANH THU BÁN HÀNG HÓA, DỊCH VỤ</h2>
+            <h2 style="margin:0;">SỔ DOANH THU BÁN HÀNG HÓA, DỊCH VỤ</h2>
             <div class="bold">Kỳ kê khai: <span id="out_ky"></span></div>
         </div>
 
@@ -102,70 +93,63 @@
             </tfoot>
         </table>
 
-        <table class="no-border" style="margin-top: 30px;">
+        <table class="no-border" style="margin-top: 40px;">
             <tr><td colspan="2"></td><td class="italic text-center">Ngày ...... tháng ...... năm 20...</td></tr>
-            <tr class="bold text-center" style="font-size: 11pt;">
+            <tr class="bold text-center">
                 <td>Người lập biểu</td>
                 <td>Kế toán trưởng</td>
                 <td>Đại diện hộ kinh doanh</td>
             </tr>
-            <tr style="height: 80px;"><td></td><td></td><td></td></tr>
+            <tr style="height: 100px;"><td></td><td></td><td></td></tr>
         </table>
     </div>
 
     <script>
-        // Khai báo biến global để các hàm download/email đều dùng được
         let globalData = {};
-
-        // Xử lý dữ liệu từ AppSheet ngay khi tải trang
         const hashData = window.location.hash.substring(1);
+        
         if(hashData) {
             try {
                 globalData = JSON.parse(decodeURIComponent(hashData));
-                
-                document.getElementById('out_ten').innerText = globalData.tenHKD || "";
-                document.getElementById('out_mst').innerText = globalData.mst || "";
-                document.getElementById('out_dc').innerText = globalData.diaChi || "";
-                document.getElementById('out_ky').innerText = `Quý ${globalData.quy || ""} Năm ${globalData.nam || ""}`;
-                document.getElementById('out_rate').innerText = globalData.thueSuat || "0";
+                document.getElementById('out_ten').innerText = globalData.tenHKD;
+                document.getElementById('out_mst').innerText = globalData.mst;
+                document.getElementById('out_dc').innerText = globalData.diaChi;
+                document.getElementById('out_ky').innerText = `Quý ${globalData.quy} Năm ${globalData.nam}`;
+                document.getElementById('out_rate').innerText = globalData.thueSuat;
 
                 let html = ""; let tong = 0;
-                if (globalData.danhSachDong) {
-                    globalData.danhSachDong.forEach(item => {
-                        let st = parseFloat(item.st) || 0;
-                        tong += st;
-                        html += `<tr>
-                            <td class="text-center">${item.sh}</td>
-                            <td class="text-center">${item.ng}</td>
-                            <td>${item.dg}</td>
-                            <td class="text-right">${st.toLocaleString('vi-VN')}</td>
-                        </tr>`;
-                    });
-                }
+                globalData.danhSachDong.forEach(item => {
+                    let st = parseFloat(item.st) || 0;
+                    tong += st;
+                    html += `<tr>
+                        <td class="text-center">${item.sh}</td>
+                        <td class="text-center">${item.ng}</td>
+                        <td>${item.dg}</td>
+                        <td class="text-right">${st.toLocaleString('vi-VN')}</td>
+                    </tr>`;
+                });
                 document.getElementById('out_body').innerHTML = html;
                 document.getElementById('out_tong').innerText = tong.toLocaleString('vi-VN');
-                document.getElementById('out_vat').innerText = (tong * (parseFloat(globalData.thueSuat) || 0) / 100).toLocaleString('vi-VN');
-            } catch (e) { 
-                console.error("Lỗi parse JSON:", e); 
-            }
+                document.getElementById('out_vat').innerText = (tong * globalData.thueSuat / 100).toLocaleString('vi-VN');
+            } catch (e) { alert("Lỗi dữ liệu!"); }
         }
 
         function downloadPDF() {
             const element = document.getElementById('content-to-export');
             const opt = {
-                margin: 5,
-                filename: `So_Doanh_Thu_Q${globalData.quy || 'X'}_${globalData.nam || '202X'}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2.5 }, // Tăng scale một chút để nét hơn
+                margin: [10, 5, 10, 5], // Lề: Trên, Trái, Dưới, Phải
+                filename: `S2b_Q${globalData.quy}_${globalData.nam}.pdf`,
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { 
+                    scale: 2, 
+                    logging: false, 
+                    useCORS: true,
+                    letterRendering: true 
+                },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
+            // Sử dụng thư viện để xuất
             html2pdf().set(opt).from(element).save();
-        }
-
-        function sendEmail() {
-            const subject = encodeURIComponent(`Báo cáo S2b Quý ${globalData.quy || ""} - ${globalData.tenHKD || ""}`);
-            const body = encodeURIComponent(`Kính gửi,... \nTôi gửi báo cáo doanh thu Quý ${globalData.quy || ""}. Vui lòng xem chi tiết tại link đính kèm.`);
-            window.location.href = `mailto:?subject=${subject}&body=${body}`;
         }
     </script>
 </body>
