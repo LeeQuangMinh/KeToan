@@ -8,29 +8,27 @@
         @page { size: A4; margin: 0.8cm; }
         body { font-family: "Times New Roman", serif; color: black; line-height: 1.2; font-size: 11.5pt; margin: 0; padding: 0; }
         
-        /* ĐIỀU CHỈNH TỶ LỆ CỘT MỚI */
-        .col-sh { width: 23%; } /* Số hiệu: Vừa đủ cho mã dài */
-        .col-ng { width: 13%; } /* Ngày: Giữ nguyên */
-        .col-dg { width: 48%; } /* Diễn giải: Ưu tiên rộng nhất */
-        .col-st { width: 16%; } /* Số tiền: Thu gọn tối đa để tránh mất chữ */
+        /* ĐIỀU CHỈNH TỶ LỆ CỘT TỐI ƯU */
+        .col-sh { width: 23%; } 
+        .col-ng { width: 13%; } 
+        .col-dg { width: 49%; } 
+        .col-st { width: 15%; } /* Thu hẹp thêm 1% để an toàn cho cột tiền */
 
         table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
         
-        /* Thu nhỏ padding để không gian chứa chữ rộng hơn */
         th, td { 
             border: 1px solid black; 
-            padding: 4px 2px; /* Giảm khoảng cách viền 2 bên cực nhỏ */
+            padding: 4px 2px; 
             word-wrap: break-word; 
             overflow: hidden; 
         }
         
         .text-center { text-align: center; }
-        .text-right { text-align: right; }
+        .text-right { text-align: right; padding-right: 3px; } /* Thêm chút đệm phải cho số tiền */
         .bold { font-weight: bold; }
         .italic { font-style: italic; }
         .no-border, .no-border td { border: none !important; }
 
-        /* Giao diện nút bấm chuyên nghiệp */
         .no-print { 
             position: sticky; top: 0; background: #ffffff; padding: 10px; 
             border-bottom: 1px solid #ddd; display: flex; gap: 10px; justify-content: center; z-index: 1000;
@@ -41,7 +39,7 @@
             font-weight: bold; color: white; font-size: 14px; text-transform: uppercase;
         }
         .btn-print { background: #555; }
-        .btn-download { background: #d9534f; } /* Màu đỏ PDF */
+        .btn-download { background: #d9534f; } 
         .btn-send { background: #5bc0de; }
         .btn:hover { opacity: 0.8; }
 
@@ -116,51 +114,57 @@
     </div>
 
     <script>
-        // Xử lý dữ liệu từ AppSheet
+        // Khai báo biến global để các hàm download/email đều dùng được
+        let globalData = {};
+
+        // Xử lý dữ liệu từ AppSheet ngay khi tải trang
         const hashData = window.location.hash.substring(1);
         if(hashData) {
             try {
-                const data = JSON.parse(decodeURIComponent(hashData));
-                document.getElementById('out_ten').innerText = data.tenHKD;
-                document.getElementById('out_mst').innerText = data.mst;
-                document.getElementById('out_dc').innerText = data.diaChi;
-                document.getElementById('out_ky').innerText = `Quý ${data.quy} Năm ${data.nam}`;
-                document.getElementById('out_rate').innerText = data.thueSuat;
+                globalData = JSON.parse(decodeURIComponent(hashData));
+                
+                document.getElementById('out_ten').innerText = globalData.tenHKD || "";
+                document.getElementById('out_mst').innerText = globalData.mst || "";
+                document.getElementById('out_dc').innerText = globalData.diaChi || "";
+                document.getElementById('out_ky').innerText = `Quý ${globalData.quy || ""} Năm ${globalData.nam || ""}`;
+                document.getElementById('out_rate').innerText = globalData.thueSuat || "0";
 
                 let html = ""; let tong = 0;
-                data.danhSachDong.forEach(item => {
-                    let st = parseFloat(item.st) || 0;
-                    tong += st;
-                    html += `<tr>
-                        <td class="text-center">${item.sh}</td>
-                        <td class="text-center">${item.ng}</td>
-                        <td>${item.dg}</td>
-                        <td class="text-right">${st.toLocaleString('vi-VN')}</td>
-                    </tr>`;
-                });
+                if (globalData.danhSachDong) {
+                    globalData.danhSachDong.forEach(item => {
+                        let st = parseFloat(item.st) || 0;
+                        tong += st;
+                        html += `<tr>
+                            <td class="text-center">${item.sh}</td>
+                            <td class="text-center">${item.ng}</td>
+                            <td>${item.dg}</td>
+                            <td class="text-right">${st.toLocaleString('vi-VN')}</td>
+                        </tr>`;
+                    });
+                }
                 document.getElementById('out_body').innerHTML = html;
                 document.getElementById('out_tong').innerText = tong.toLocaleString('vi-VN');
-                document.getElementById('out_vat').innerText = (tong * data.thueSuat / 100).toLocaleString('vi-VN');
-            } catch (e) { console.error("Lỗi parse JSON"); }
+                document.getElementById('out_vat').innerText = (tong * (parseFloat(globalData.thueSuat) || 0) / 100).toLocaleString('vi-VN');
+            } catch (e) { 
+                console.error("Lỗi parse JSON:", e); 
+            }
         }
 
-// Hàm tải PDF trực tiếp
         function downloadPDF() {
             const element = document.getElementById('content-to-export');
             const opt = {
                 margin: 5,
-                filename: `So_Doanh_Thu_Q${data.quy}_${data.nam}.pdf`,
+                filename: `So_Doanh_Thu_Q${globalData.quy || 'X'}_${globalData.nam || '202X'}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
+                html2canvas: { scale: 2.5 }, // Tăng scale một chút để nét hơn
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
             html2pdf().set(opt).from(element).save();
         }
 
-        // Hàm Gửi Email (Mở trình soạn thảo email)
         function sendEmail() {
-            const subject = encodeURIComponent(`Báo cáo S2b Quý ${data.quy} - ${data.tenHKD}`);
-            const body = encodeURIComponent(`Kính gửi,... \nTôi gửi báo cáo doanh thu Quý ${data.quy}. Vui lòng xem chi tiết tại link đính kèm.`);
+            const subject = encodeURIComponent(`Báo cáo S2b Quý ${globalData.quy || ""} - ${globalData.tenHKD || ""}`);
+            const body = encodeURIComponent(`Kính gửi,... \nTôi gửi báo cáo doanh thu Quý ${globalData.quy || ""}. Vui lòng xem chi tiết tại link đính kèm.`);
             window.location.href = `mailto:?subject=${subject}&body=${body}`;
         }
     </script>
