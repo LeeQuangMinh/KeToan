@@ -144,23 +144,23 @@
             } catch (e) { console.error("Lỗi parse JSON"); }
         }
 
-        // CHỨC NĂNG TẢI PDF TRỰC TIẾP
+// Hàm tải PDF trực tiếp
         function downloadPDF() {
             const element = document.getElementById('content-to-export');
             const opt = {
                 margin: 5,
                 filename: `So_Doanh_Thu_Q${data.quy}_${data.nam}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2}, 
+                html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
             html2pdf().set(opt).from(element).save();
         }
 
-        // GỬI EMAIL (Mở trình duyệt mail)
+        // Hàm Gửi Email (Mở trình soạn thảo email)
         function sendEmail() {
             const subject = encodeURIComponent(`Báo cáo S2b Quý ${data.quy} - ${data.tenHKD}`);
-            const body = encodeURIComponent("Kính gửi bộ phận kế toán,\nTôi gửi báo cáo doanh thu theo link đính kèm: " + window.location.href);
+            const body = encodeURIComponent(`Kính gửi,... \nTôi gửi báo cáo doanh thu Quý ${data.quy}. Vui lòng xem chi tiết tại link đính kèm.`);
             window.location.href = `mailto:?subject=${subject}&body=${body}`;
         }
     </script>
