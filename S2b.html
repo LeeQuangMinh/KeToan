@@ -159,7 +159,7 @@
 
         // GỬI EMAIL (Mở trình duyệt mail)
         function sendEmail() {
-            const subject = encodeURIComponent("Báo cáo Sổ doanh thu S2b-HKD");
+            const subject = encodeURIComponent(`Báo cáo S2b Quý ${data.quy} - ${data.tenHKD}`);
             const body = encodeURIComponent("Kính gửi bộ phận kế toán,\nTôi gửi báo cáo doanh thu theo link đính kèm: " + window.location.href);
             window.location.href = `mailto:?subject=${subject}&body=${body}`;
         }
