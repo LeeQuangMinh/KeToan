@@ -69,45 +69,56 @@
         <span style="font-weight: normal; font-style: italic;">(Ký, họ tên, đóng dấu)</span>
     </div>
 
-    <script>
-        // Hàm này sẽ được gọi để truyền dữ liệu vào
-        function renderData(data) {
-            document.getElementById('tenHKD').innerText = data.tenHKD;
-            document.getElementById('mst').innerText = data.mst;
-            document.getElementById('diaChi').innerText = data.diaChi;
-            document.getElementById('diaDiemKD').innerText = data.diaDiemKD;
-            document.getElementById('kyKeKhai').innerText = data.kyKeKhai;
-            document.getElementById('tiLeThue').innerText = data.thueSuat;
+<script>
+window.onload = function() {
+    // 1. Lấy dữ liệu từ URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const rawData = urlParams.get('data');
+    
+    if (rawData) {
+        try {
+            // 2. Giải mã và Parse JSON
+            const data = JSON.parse(decodeURIComponent(rawData));
 
-            let tableBody = document.getElementById('tableBody');
-            let tong = 0;
-            tableBody.innerHTML = ""; // Xóa dữ liệu cũ
+            // 3. Đổ dữ liệu thông tin chung
+            document.getElementById('tenHKD').innerText = data.tenHKD || "............";
+            document.getElementById('mst').innerText = data.mst || "............";
+            document.getElementById('diaChi').innerText = data.diaChi || "............";
+            document.getElementById('kyKeKhai').innerText = "Năm " + data.nam;
 
-            // Duyệt mảng JSON từ AppSheet
-            data.danhSachDong.forEach(item => {
-                let soTien = parseFloat(item.soTien) || 0;
-                tong += soTien;
-                
-                let row = `<tr>
-                    <td>${item.soHieu}</td>
-                    <td>${item.ngay}</td>
-                    <td class="text-left">${item.dienGiai}</td>
-                    <td class="text-right">${soTien.toLocaleString()}</td>
-                </tr>`;
-                tableBody.innerHTML += row;
-            });
+            // 4. Xử lý bảng dữ liệu
+            const tableBody = document.getElementById('tableBody');
+            let tongSoTien = 0;
 
-            // Tính toán thuế
-            let tiLe = parseFloat(data.thueSuat) || 0;
-            let thue = tong * (tiLe / 100);
+            if (data.danhSachDong && data.danhSachDong.length > 0) {
+                data.danhSachDong.forEach(item => {
+                    let st = parseFloat(item.soTien) || 0;
+                    tongSoTien += st;
 
-            document.getElementById('tongCong').innerText = tong.toLocaleString();
-            document.getElementById('tienThue').innerText = thue.toLocaleString();
-            document.getElementById('tongPhaiNop').innerText = thue.toLocaleString();
+                    let row = `<tr>
+                        <td>${item.soHieu || ''}</td>
+                        <td>${item.ngay || ''}</td>
+                        <td style="text-align: left;">${item.dienGiai || 'Doanh thu bán hàng, dịch vụ'}</td>
+                        <td style="text-align: right;">${st.toLocaleString()}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                });
+            }
+
+            // 5. Tính toán Thuế (Theo % bạn muốn, ví dụ 1.5%)
+            let thueSuat = 1.5; // Bạn có thể truyền thêm thueSuat từ AppSheet nếu cần
+            let tienThue = tongSoTien * (thueSuat / 100);
+
+            document.getElementById('tongCong').innerText = tongSoTien.toLocaleString();
+            document.getElementById('tienThue').innerText = tienThue.toLocaleString();
+            document.getElementById('tongPhaiNop').innerText = tienThue.toLocaleString();
+
+        } catch (e) {
+            console.error("Lỗi dữ liệu JSON:", e);
+            alert("Không thể hiển thị báo cáo. Dữ liệu bị lỗi hoặc quá dài.");
         }
-
-        // Dòng này để test thử, khi dùng thật AppSheet sẽ truyền vào
-        // window.onload = () => renderData(JSON_TU_APPSHEET);
-    </script>
+    }
+};
+</script>
 </body>
 </html>
