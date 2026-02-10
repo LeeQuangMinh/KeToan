@@ -149,7 +149,7 @@
             const element = document.getElementById('content-to-export');
             const opt = {
                 margin: 5,
-                filename: 'So_Doanh_Thu_S2b.pdf',
+                filename: `So_Doanh_Thu_Q${data.quy}_${data.nam}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 3, useCORS: true }, // Tăng scale để chữ cực nét
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
