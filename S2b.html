@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: "Times New Roman", serif; padding: 30px; color: #000; }
+        .header { width: 100%; display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .title { text-align: center; font-weight: bold; width: 100%; margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid black; padding: 10px; text-align: center; }
+        .text-left { text-align: left; }
+        .text-right { text-align: right; }
+        .bold { font-weight: bold; }
+        .footer { margin-top: 40px; text-align: right; font-style: italic; }
+        .signature { margin-top: 60px; text-align: right; font-weight: bold; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div style="text-align: right; font-style: italic; font-size: 13px;">
+        <b>Mẫu số S2b-HKD</b><br>
+        (Kèm theo Thông tư số 88/2021/TT-BTC)
+    </div>
+
+    <div>
+        <b>HỘ, CÁ NHÂN KINH DOANH:</b> <span id="tenHKD"></span><br>
+        <b>Mã số thuế:</b> <span id="mst"></span><br>
+        <b>Địa chỉ:</b> <span id="diaChi"></span>
+    </div>
+
+    <div class="title">
+        <h2 style="margin: 5px;">SỔ DOANH THU BÁN HÀNG HÓA, DỊCH VỤ</h2>
+        Địa điểm kinh doanh: <span id="diaDiemKD"></span><br>
+        Kỳ kê khai: <span id="kyKeKhai"></span>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th colspan="2">Chứng từ</th>
+                <th rowspan="2">Diễn giải</th>
+                <th rowspan="2">Số tiền</th>
+            </tr>
+            <tr>
+                <th>Số hiệu</th>
+                <th>Ngày, tháng</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            </tbody>
+        <tfoot>
+            <tr class="bold">
+                <td colspan="3">Tổng cộng (1)</td>
+                <td class="text-right" id="tongCong">0</td>
+            </tr>
+            <tr>
+                <td colspan="3" class="text-left">Thuế GTGT (<span id="tiLeThue">0</span>%)</td>
+                <td class="text-right" id="tienThue">0</td>
+            </tr>
+            <tr class="bold" style="background-color: #f9f9f9;">
+                <td colspan="3" class="text-left">Tổng số thuế GTGT phải nộp</td>
+                <td class="text-right" id="tongPhaiNop">0</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="footer">Ngày ...... tháng ...... năm ......</div>
+    <div class="signature">
+        NGƯỜI ĐẠI DIỆN HỘ KINH DOANH<br>
+        <span style="font-weight: normal; font-style: italic;">(Ký, họ tên, đóng dấu)</span>
+    </div>
+
+    <script>
+        // Hàm này sẽ được gọi để truyền dữ liệu vào
+        function renderData(data) {
+            document.getElementById('tenHKD').innerText = data.tenHKD;
+            document.getElementById('mst').innerText = data.mst;
+            document.getElementById('diaChi').innerText = data.diaChi;
+            document.getElementById('diaDiemKD').innerText = data.diaDiemKD;
+            document.getElementById('kyKeKhai').innerText = data.kyKeKhai;
+            document.getElementById('tiLeThue').innerText = data.thueSuat;
+
+            let tableBody = document.getElementById('tableBody');
+            let tong = 0;
+            tableBody.innerHTML = ""; // Xóa dữ liệu cũ
+
+            // Duyệt mảng JSON từ AppSheet
+            data.danhSachDong.forEach(item => {
+                let soTien = parseFloat(item.soTien) || 0;
+                tong += soTien;
+                
+                let row = `<tr>
+                    <td>${item.soHieu}</td>
+                    <td>${item.ngay}</td>
+                    <td class="text-left">${item.dienGiai}</td>
+                    <td class="text-right">${soTien.toLocaleString()}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+
+            // Tính toán thuế
+            let tiLe = parseFloat(data.thueSuat) || 0;
+            let thue = tong * (tiLe / 100);
+
+            document.getElementById('tongCong').innerText = tong.toLocaleString();
+            document.getElementById('tienThue').innerText = thue.toLocaleString();
+            document.getElementById('tongPhaiNop').innerText = thue.toLocaleString();
+        }
+
+        // Dòng này để test thử, khi dùng thật AppSheet sẽ truyền vào
+        // window.onload = () => renderData(JSON_TU_APPSHEET);
+    </script>
+</body>
+</html>
