@@ -5,41 +5,44 @@
     <title>Sổ chi tiết vật liệu S2d-HKD</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        @page { size: A4 landscape; margin: 10mm; } /* S2d nên in khổ ngang (landscape) */
+        /* Khổ ngang landscape để đủ chỗ cho 12 cột */
+        @page { size: A4 landscape; margin: 10mm; }
         body { font-family: "Times New Roman", serif; color: black; line-height: 1.2; font-size: 10pt; margin: 0; padding: 0; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
-        th, td { border: 1px solid black; padding: 4px; word-wrap: break-word; text-align: center; }
+        th, td { border: 1px solid black; padding: 4px; word-wrap: break-word; text-align: center; height: 25px; }
         
-        /* Cấu trúc cột theo mẫu */
-        .col-stt { width: 8%; }
-        .col-dg { width: 15%; }
+        /* Tỷ lệ cột để cân đối các mục Nhập - Xuất - Tồn */
+        .col-stt { width: 6%; }
+        .col-dg { width: 18%; }
         .col-unit { width: 7%; }
-        .col-val { width: 8%; }
+        .col-val { width: 8.5%; }
 
-        .text-left { text-align: left; }
+        .text-left { text-align: left; padding-left: 5px; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
         .bold { font-weight: bold; }
         .italic { font-style: italic; }
         .no-border, .no-border td { border: none !important; }
 
         .no-print { 
-            position: sticky; top: 0; background: #fff; padding: 10px; 
+            position: sticky; top: 0; background: #fff; padding: 15px; 
             border-bottom: 1px solid #ddd; display: flex; gap: 10px; justify-content: center; z-index: 1000;
         }
-        .btn { cursor: pointer; padding: 8px 15px; border: none; border-radius: 4px; font-weight: bold; color: white; }
+        .btn { cursor: pointer; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; color: white; text-transform: uppercase; }
         .btn-download { background: #d9534f; }
     </style>
 </head>
 <body>
 
     <div class="no-print">
-        <button class="btn btn-download" onclick="downloadPDF()">TẢI PDF S2D (KHỔ NGANG)</button>
+        <button class="btn btn-download" onclick="downloadPDF()">TẢI PDF S2D (MẪU CHUẨN)</button>
     </div>
 
     <div id="content-to-export" style="padding: 10px; background: white;">
         <table class="no-border">
             <tr>
-                <td class="text-left" style="width: 60%;">
+                <td class="text-left" style="width: 65%;">
                     <div class="bold">HỘ KINH DOANH: <span id="out_ten"></span></div>
                     <div class="bold">MST: <span id="out_mst"></span></div>
                     <div class="bold">Địa chỉ: <span id="out_dc"></span></div>
@@ -51,11 +54,11 @@
             </tr>
         </table>
 
-        <div class="text-center">
-            <h2 style="margin: 10px 0 5px 0;">SỔ CHI TIẾT VẬT LIỆU, DỤNG CỤ, SẢN PHẨM, HÀNG HÓA</h2>
-            <div>Tên vật liệu, dụng cụ, sản phẩm, hàng hóa: ...........................................................</div>
+        <div class="text-center" style="margin-top: 10px;">
+            <h2 style="margin: 0; font-size: 14pt; text-transform: uppercase;">SỐ CHI TIẾT VẬT LIỆU, DỤNG CỤ, SẢN PHẨM, HÀNG HÓA</h2>
+            <div style="margin-top: 5px;">Tên vật liệu, dụng cụ, sản phẩm, hàng hóa: ...........................................................</div>
             <div class="bold">Kỳ kê khai: <span id="out_ky"></span></div>
-            <div class="text-right italic">Đơn vị tính: Đồng</div>
+            <div class="text-right italic" style="font-size: 9pt; margin-top: 5px;">Đơn vị tính: Đồng</div>
         </div>
 
         <table>
@@ -80,7 +83,7 @@
                     <th class="col-val">Số lượng</th>
                     <th class="col-val">Thành tiền</th>
                 </tr>
-                <tr class="italic" style="font-size: 9pt;">
+                <tr class="italic" style="font-size: 9pt; background: #f2f2f2;">
                     <td>A</td><td>B</td><td>C</td><td>D</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td>
                 </tr>
             </thead>
@@ -89,51 +92,65 @@
                     <td></td><td></td><td class="text-left">Số dư đầu kỳ</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
                 </tr>
                 <script>
-                    for(let i=0; i<10; i++) {
+                    for(let i=0; i<12; i++) {
                         document.write("<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>");
                     }
                 </script>
                 <tr class="bold">
-                    <td></td><td></td><td class="text-left">Cộng phát sinh trong kỳ</td><td>X</td><td>X</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                    <td></td><td></td><td class="text-left">Cộng phát sinh trong kỳ</td><td class="bg-x">X</td><td class="bg-x">X</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
                 </tr>
                 <tr class="bold">
-                    <td></td><td></td><td class="text-left">Số dư cuối kỳ</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                    <td></td><td></td><td class="text-left">Số dư cuối kỳ</td><td></td><td></td><td></td><td></td><td class="bg-x">X</td><td class="bg-x">X</td><td class="bg-x">X</td><td class="bg-x">X</td><td></td>
                 </tr>
             </tbody>
         </table>
 
-        <table class="no-border" style="margin-top: 20px;">
-            <tr><td colspan="2"></td><td class="italic">Ngày ...... tháng ...... năm 20...</td></tr>
-            <tr class="bold">
+        <table class="no-border" style="margin-top: 25px;">
+            <tr class="italic">
+                <td colspan="2"></td>
+                <td class="text-center">Ngày ...... tháng ...... năm 20...</td>
+            </tr>
+            <tr class="bold text-center">
                 <td>Người lập biểu</td>
                 <td>Kế toán trưởng</td>
                 <td>ĐẠI DIỆN HỘ KINH DOANH</td>
             </tr>
-            <tr style="height: 60px;"><td></td><td></td><td></td></tr>
+            <tr class="italic text-center" style="font-size: 9pt;">
+                <td>(Ký, họ tên)</td>
+                <td>(Ký, họ tên)</td>
+                <td>(Ký, họ tên, đóng dấu)</td>
+            </tr>
+            <tr style="height: 70px;"><td></td><td></td><td></td></tr>
         </table>
     </div>
 
     <script>
+        let globalData = {};
         const hashData = window.location.hash.substring(1);
+        
         if(hashData) {
             try {
-                const data = JSON.parse(decodeURIComponent(hashData));
-                document.getElementById('out_ten').innerText = data.tenHKD || "";
-                document.getElementById('out_mst').innerText = data.mst || "";
-                document.getElementById('out_dc').innerText = data.diaChi || "";
-                document.getElementById('out_ky').innerText = `Quý ${data.quy} Năm ${data.nam}`;
-            } catch (e) {}
+                globalData = JSON.parse(decodeURIComponent(hashData));
+                document.getElementById('out_ten').innerText = globalData.tenHKD || "";
+                document.getElementById('out_mst').innerText = globalData.mst || "";
+                document.getElementById('out_dc').innerText = globalData.diaChi || "";
+                document.getElementById('out_ky').innerText = `Quý ${globalData.quy} Năm ${globalData.nam}`;
+            } catch (e) { console.error("Lỗi dữ liệu hash"); }
         }
 
         function downloadPDF() {
             const element = document.getElementById('content-to-export');
-            html2pdf().set({
+            const q = globalData.quy || "X";
+            const n = globalData.nam || "202X";
+            
+            const opt = {
                 margin: [5, 5, 5, 5],
-                filename: 'S2d_HKD.pdf',
+                filename: `S2d_Quy_${q}_Nam_${n}.pdf`, // Tên file động theo thời gian
                 image: { type: 'jpeg', quality: 1 },
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            }).from(element).save();
+            };
+            html2pdf().set(opt).from(element).save();
         }
     </script>
 </body>
