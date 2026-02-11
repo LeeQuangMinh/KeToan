@@ -65,7 +65,7 @@
 
         <div class="text-center" style="margin-top: 15px;">
             <h2 style="margin:0;">SỔ DOANH THU BÁN HÀNG HÓA, DỊCH VỤ</h2>
-            <div class="bold">Địa điểm kinh doanh: <span id="out_dc"></span></div>
+            <div class="bold">Địa điểm kinh doanh: <span id="out_ddkd"></span></div>
             <div class="bold">Kỳ kê khai: <span id="out_ky"></span></div>
         </div>
 
@@ -125,6 +125,7 @@
                 document.getElementById('out_ten').innerText = globalData.tenHKD;
                 document.getElementById('out_mst').innerText = globalData.mst;
                 document.getElementById('out_dc').innerText = globalData.diaChi;
+                document.getElementById('out_ddkd').innerText = globalData.diaChi;
                 document.getElementById('out_ky').innerText = `Quý ${globalData.quy} Năm ${globalData.nam}`;
                 document.getElementById('out_rate').innerText = globalData.thueSuat;
 
