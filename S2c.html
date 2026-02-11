@@ -8,41 +8,38 @@
         @page { size: A4; margin: 10mm; }
         body { font-family: "Times New Roman", serif; color: black; line-height: 1.4; font-size: 11pt; margin: 0; padding: 0; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid black; padding: 6px 4px; word-wrap: break-word; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; }
+        th, td { border: 1px solid black; padding: 5px; word-wrap: break-word; }
         
-        /* Tỷ lệ cột mẫu S2c */
-        .col-sh { width: 15%; }
-        .col-ng { width: 12%; }
-        .col-dg { width: auto; }
-        .col-st { width: 18%; white-space: nowrap; }
+        /* Định dạng cột chuẩn */
+        .col-a { width: 12%; }
+        .col-b { width: 12%; }
+        .col-c { width: auto; }
+        .col-1 { width: 18%; }
 
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .bold { font-weight: bold; }
         .italic { font-style: italic; }
         .no-border, .no-border td { border: none !important; }
+        .bg-light { background-color: #f9f9f9; }
 
         .no-print { 
             position: sticky; top: 0; background: #fff; padding: 15px; 
             border-bottom: 1px solid #ddd; display: flex; gap: 10px; justify-content: center; z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .btn { cursor: pointer; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; color: white; }
+        .btn { cursor: pointer; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; color: white; text-transform: uppercase; }
         .btn-download { background: #d9534f; }
         .btn-print { background: #555; }
 
-        @media print { 
-            .no-print { display: none; }
-            tfoot { display: table-footer-group; } 
-        }
+        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body>
 
     <div class="no-print">
-        <button class="btn btn-download" onclick="downloadPDF()">TẢI PDF S2C</button>
-        <button class="btn btn-print" onclick="window.print()">IN TRỰC TIẾP</button>
+        <button class="btn btn-download" onclick="downloadPDF()">Tải PDF S2c</button>
+        <button class="btn btn-print" onclick="window.print()">In trực tiếp</button>
     </div>
 
     <div id="content-to-export" style="padding: 10px; background: white;">
@@ -55,56 +52,76 @@
                 </td>
                 <td class="text-right" style="width: 35%; vertical-align: top;">
                     <div class="bold">Mẫu số S2c-HKD</div>
-                    <div class="italic" style="font-size: 10pt;">(Thông tư số 152/2025/TT-BTC)</div>
+                    <div class="italic" style="font-size: 9pt;">(Thông tư số 152/2025/TT-BTC)</div>
                 </td>
             </tr>
         </table>
 
         <div class="text-center" style="margin-top: 15px;">
-            <h2 style="margin:0;">SỔ CHI TIẾT DOANH THU, CHI PHÍ</h2>
+            <h2 style="margin:0; font-size: 15pt;">SỔ CHI TIẾT DOANH THU, CHI PHÍ</h2>
             <div class="bold">Địa điểm kinh doanh: <span id="out_ddkd"></span></div>
             <div class="bold">Kỳ kê khai: <span id="out_ky"></span></div>
+            <div class="text-right italic" style="font-size: 10pt;">Đơn vị tính: Đồng</div>
         </div>
 
         <table>
             <thead>
-                <tr>
+                <tr class="bold text-center">
                     <th colspan="2">Chứng từ</th>
-                    <th rowspan="2" class="col-dg">Diễn giải</th>
-                    <th rowspan="2" class="col-st">Số tiền</th>
+                    <th rowspan="2" class="col-c">Diễn giải</th>
+                    <th rowspan="2" class="col-1">Số tiền</th>
                 </tr>
-                <tr>
-                    <th class="col-sh">Số hiệu (A)</th>
-                    <th class="col-ng">Ngày (B)</th>
+                <tr class="bold text-center">
+                    <th class="col-a">Số hiệu (A)</th>
+                    <th class="col-b">Ngày (B)</th>
+                </tr>
+                <tr class="text-center italic" style="font-size: 10pt;">
+                    <td>A</td>
+                    <td>B</td>
+                    <td>C</td>
+                    <td>1</td>
                 </tr>
             </thead>
-            <tbody id="out_body">
-                </tbody>
-            <tfoot>
-                <tr class="bold">
-                    <td colspan="3">1. Doanh thu bán hàng hóa, dịch vụ</td>
+            <tbody>
+                <tr class="bold bg-light">
+                    <td></td>
+                    <td></td>
+                    <td>1. Doanh thu bán hàng hóa, dịch vụ</td>
                     <td class="text-right" id="out_dt">0</td>
                 </tr>
-                <tr class="bold">
-                    <td colspan="3">2. Chi phí hợp lý</td>
-                    <td class="text-right" id="out_cp">0</td>
+                <tr class="bold bg-light">
+                    <td></td>
+                    <td></td>
+                    <td>2. Chi phí hợp lý</td>
+                    <td class="text-right" id="out_cp_tong">0</td>
                 </tr>
-                <tr class="bold">
-                    <td colspan="3">3. Chênh lệch {(3) = (1) - (2)}</td>
+                
+                <tr id="row_detail_placeholder" style="display:none;"></tr> 
+                <tbody id="out_detail_body"></tbody>
+
+                <tr class="bold bg-light">
+                    <td></td>
+                    <td></td>
+                    <td>3. Chênh lệch {(3) = (1) - (2)}</td>
                     <td class="text-right" id="out_cl">0</td>
                 </tr>
-                <tr class="bold">
-                    <td colspan="3">4. Tổng số thuế TNCN phải nộp {(4) = (3) x <span id="out_rate">0</span>%}</td>
+                <tr class="bold bg-light">
+                    <td></td>
+                    <td></td>
+                    <td>4. Tổng số thuế TNCN phải nộp {(4) = (3) x <span id="out_rate">0</span>%}</td>
                     <td class="text-right" id="out_tncn">0</td>
                 </tr>
+            </tbody>
+            <tfoot>
                 <tr class="bold">
-                    <td colspan="3" class="text-center">Tổng cộng</td>
-                    <td class="text-right" id="out_tong">0</td>
+                    <td colspan="2" class="text-center">Tổng cộng</td>
+                    <td></td>
+                    <td class="text-right" id="out_footer_sum">0</td>
                 </tr>
             </tfoot>
         </table>
 
-        <table class="no-border" style="margin-top: 40px;">
+        <table class="no-border" style="margin-top: 30px;">
             <tr><td colspan="2"></td><td class="italic text-center">Ngày ...... tháng ...... năm 20...</td></tr>
             <tr class="bold text-center">
                 <td colspan="2"></td>
@@ -114,76 +131,72 @@
                 <td colspan="2"></td>
                 <td>(Ký, họ tên, đóng dấu)</td>
             </tr>
-            <tr style="height: 100px;"><td></td><td></td><td></td></tr>
+            <tr style="height: 80px;"><td></td><td></td><td></td></tr>
         </table>
     </div>
 
-<script>
-    let globalData = {};
-    const hashData = window.location.hash.substring(1);
-    
-    if(hashData) {
-        try {
-            globalData = JSON.parse(decodeURIComponent(hashData));
-            
-            // Đổ thông tin header
-            document.getElementById('out_ten').innerText = globalData.tenHKD;
-            document.getElementById('out_mst').innerText = globalData.mst;
-            document.getElementById('out_dc').innerText = globalData.diaChi;
-            document.getElementById('out_ddkd').innerText = globalData.diaChi;
-            document.getElementById('out_ky').innerText = `Quý ${globalData.quy} Năm ${globalData.nam}`;
-            document.getElementById('out_rate').innerText = globalData.thueSuatTNCN || "0";
+    <script>
+        let globalData = {};
+        const hashData = window.location.hash.substring(1);
+        
+        if(hashData) {
+            try {
+                globalData = JSON.parse(decodeURIComponent(hashData));
+                document.getElementById('out_ten').innerText = globalData.tenHKD;
+                document.getElementById('out_mst').innerText = globalData.mst;
+                document.getElementById('out_dc').innerText = globalData.diaChi;
+                document.getElementById('out_ddkd').innerText = globalData.diaChi;
+                document.getElementById('out_ky').innerText = `Quý ${globalData.quy} Năm ${globalData.nam}`;
+                
+                let rate = parseFloat(globalData.thueSuatTNCN) || 0;
+                document.getElementById('out_rate').innerText = rate;
 
-            // 1. Lấy Tổng Doanh Thu truyền từ AppSheet
-            let tongDT = parseFloat(globalData.tongDT) || 0;
-            document.getElementById('out_dt').innerText = tongDT.toLocaleString('vi-VN');
+                // 1. Tổng doanh thu (từ AppSheet)
+                let tongDT = parseFloat(globalData.tongDT) || 0;
+                document.getElementById('out_dt').innerText = tongDT.toLocaleString('vi-VN');
 
-            // 2. Xử lý danh sách Chi phí và tính tổng Chi phí
-            let html = ""; 
-            let tongCP = 0;
-            if(globalData.danhSachDong) {
-                globalData.danhSachDong.forEach(item => {
-                    let st = parseFloat(item.st) || 0;
-                    tongCP += st;
-                    html += `<tr>
-                        <td class="text-center">${item.sh}</td>
-                        <td class="text-center">${item.ng}</td>
-                        <td>${item.dg}</td>
-                        <td class="text-right">${st.toLocaleString('vi-VN')}</td>
-                    </tr>`;
-                });
-            }
-            document.getElementById('out_body').innerHTML = html;
-            document.getElementById('out_cp').innerText = tongCP.toLocaleString('vi-VN');
+                // 2. Danh sách chi tiết phiếu chi
+                let detailHtml = "";
+                let tongCP = 0;
+                if(globalData.danhSachDong) {
+                    globalData.danhSachDong.forEach(item => {
+                        let st = parseFloat(item.st) || 0;
+                        tongCP += st;
+                        detailHtml += `<tr>
+                            <td class="text-center">${item.sh}</td>
+                            <td class="text-center">${item.ng}</td>
+                            <td style="padding-left: 25px;">- ${item.dg}</td>
+                            <td class="text-right">${st.toLocaleString('vi-VN')}</td>
+                        </tr>`;
+                    });
+                }
+                document.getElementById('out_detail_body').innerHTML = detailHtml;
+                document.getElementById('out_cp_tong').innerText = tongCP.toLocaleString('vi-VN');
 
-            // 3. Tính Chênh lệch = Doanh thu (AppSheet) - Chi phí (Tổng danh sách)
-            let chenhLech = tongDT - tongCP;
-            document.getElementById('out_cl').innerText = chenhLech.toLocaleString('vi-VN');
+                // 3. Chênh lệch
+                let chenhLech = tongDT - tongCP;
+                document.getElementById('out_cl').innerText = (chenhLech > 0 ? chenhLech : 0).toLocaleString('vi-VN');
 
-            // 4. Tính Thuế TNCN
-            let thueSuat = parseFloat(globalData.thueSuatTNCN) || 0;
-            let thueTNCN = chenhLech > 0 ? (chenhLech * thueSuat / 100) : 0;
-            document.getElementById('out_tncn').innerText = thueTNCN.toLocaleString('vi-VN');
+                // 4. Thuế TNCN
+                let thueTNCN = chenhLech > 0 ? (chenhLech * rate / 100) : 0;
+                document.getElementById('out_tncn').innerText = Math.round(thueTNCN).toLocaleString('vi-VN');
 
-            // Dòng tổng cộng cuối cùng (Thường là tổng doanh thu hoặc tùy cách hiển thị hộ KD)
-            document.getElementById('out_tong_footer').innerText = tongDT.toLocaleString('vi-VN');
+                // Footer Sum
+                document.getElementById('out_footer_sum').innerText = tongDT.toLocaleString('vi-VN');
 
-        } catch (e) { 
-            console.error("Lỗi xử lý dữ liệu:", e);
+            } catch (e) { console.error("Lỗi:", e); }
         }
-    }
 
-    function downloadPDF() {
-        const element = document.getElementById('content-to-export');
-        const opt = {
-            margin: [10, 5, 10, 5],
-            filename: `S2c_Q${globalData.quy}_${globalData.nam}.pdf`,
-            image: { type: 'jpeg', quality: 1 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        html2pdf().set(opt).from(element).save();
-    }
-</script>
+        function downloadPDF() {
+            const element = document.getElementById('content-to-export');
+            html2pdf().set({
+                margin: [10, 5, 10, 5],
+                filename: `S2c_Q${globalData.quy}_${globalData.nam}.pdf`,
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(element).save();
+        }
+    </script>
 </body>
 </html>
