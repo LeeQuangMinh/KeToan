@@ -16,7 +16,7 @@
         /* Tỷ lệ cột linh hoạt */
         .col-sh { width: 18%; }
         .col-ng { width: 12%; }
-        .col-dg { width: auto%; } /* Để diễn giải tự nới rộng */
+        .col-dg { width: auto; } 
         .col-st { width: 16%; white-space: nowrap; } /* Cột tiền không cho xuống dòng */
 
         .text-center { text-align: center; }
@@ -81,16 +81,6 @@
                     <th class="col-ng">Ngày (B)</th>
                 </tr>
             </thead>
-            <thead>
-                <tr>
-                    <th rowspan="2" ></th>
-                    <th rowspan="2" ></th>
-                </tr>
-                <tr>
-                    <th>1. Ngành Nghề: Lập Trình Máy Vi Tính</th>
-                    <th></th>
-                </tr>
-            </thead>
             <tbody id="out_body"></tbody>
             <tfoot>
                 <tr class="bold">
@@ -98,8 +88,12 @@
                     <td class="text-right" id="out_tong">0</td>
                 </tr>
                 <tr class="bold">
-                    <td colspan="3" class="text-center">Thuế GTGT phải nộp (<span id="out_rate">0</span>%)</td>
+                    <td colspan="3" class="text-center">Thuế GTGT phải nộp (<span id="out_rate_gtgt">0</span>%)</td>
                     <td class="text-right" id="out_vat">0</td>
+                </tr>
+                <tr class="bold">
+                    <td colspan="3" class="text-center">Thuế TNCN phải nộp (<span id="out_rate_tncn">0</span>%)</td>
+                    <td class="text-right" id="out_tncn">0</td>
                 </tr>
             </tfoot>
         </table>
@@ -127,7 +121,10 @@
                 document.getElementById('out_dc').innerText = globalData.diaChi;
                 document.getElementById('out_ddkd').innerText = globalData.diaChi;
                 document.getElementById('out_ky').innerText = `Quý ${globalData.quy} Năm ${globalData.nam}`;
-                document.getElementById('out_rate').innerText = globalData.thueSuat;
+                
+                // Cập nhật tỷ lệ thuế từ JSON
+                document.getElementById('out_rate_gtgt').innerText = globalData.thueGTGT || 0;
+                document.getElementById('out_rate_tncn').innerText = globalData.thueTNCN || 0;
 
                 let html = ""; let tong = 0;
                 globalData.danhSachDong.forEach(item => {
@@ -142,14 +139,21 @@
                 });
                 document.getElementById('out_body').innerHTML = html;
                 document.getElementById('out_tong').innerText = tong.toLocaleString('vi-VN');
-                document.getElementById('out_vat').innerText = (tong * globalData.thueSuat / 100).toLocaleString('vi-VN');
+                
+                // Tính toán thuế dựa trên tỷ lệ truyền từ AppSheet
+                let tienGTGT = (tong * (globalData.thueGTGT || 0) / 100);
+                let tienTNCN = (tong * (globalData.thueTNCN || 0) / 100);
+                
+                document.getElementById('out_vat').innerText = tienGTGT.toLocaleString('vi-VN');
+                document.getElementById('out_tncn').innerText = tienTNCN.toLocaleString('vi-VN');
+                
             } catch (e) { alert("Lỗi dữ liệu!"); }
         }
 
         function downloadPDF() {
             const element = document.getElementById('content-to-export');
             const opt = {
-                margin: [5, 5, 5, 5], // Lề: Trên, Trái, Dưới, Phải
+                margin: [5, 5, 5, 5],
                 filename: `S2b_Q${globalData.quy}_${globalData.nam}.pdf`,
                 image: { type: 'jpeg', quality: 1 },
                 html2canvas: { 
@@ -160,7 +164,6 @@
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
-            // Sử dụng thư viện để xuất
             html2pdf().set(opt).from(element).save();
         }
     </script>
