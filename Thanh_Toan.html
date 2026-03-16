@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán QR Chuẩn</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { --main-color: #EEA10D; --tp-purple: #5b2d82; }
+        body { font-family: -apple-system, sans-serif; background-color: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        
+        #payment-card { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        .title { color: var(--main-color); font-size: 22px; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .info-panel { background: #f8f9fa; border-radius: 12px; padding: 15px; text-align: left; border-left: 6px solid #EEA10D; margin-bottom: 15px; }
+        .info-panel p { margin: 5px 0; font-size: 15px; color: #444; }
+        .info-panel b { color: #000; font-size: 16px; }
+
+        /* PHÓNG LỚN VÙNG CHỨA QR */
+        #qrcode-container { 
+            margin: 10px auto; 
+            padding: 15px; 
+            background: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            border: 1px solid #f0f0f0;
+            border-radius: 15px;
+            width: fit-content;
+        }
+        
+        .note-area { background: #fffde7; border: 1.5px dashed #fbc02d; border-radius: 12px; padding: 15px; margin-top: 15px; line-height: 1.5; }
+        .note-area p { margin: 0 0 8px 0; font-size: 16px; color: #555; }
+        
+        .msg-highlight { display: block; font-size: 20px; font-weight: 700; color: #000; text-transform: uppercase; word-break: break-all; margin: 5px 0; line-height: 1.4; }
+        
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px; width: 100%; max-width: 420px; }
+        .btn { border: none; padding: 14px 0; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<div id="payment-card">
+    <div class="title">THÔNG TIN THANH TOÁN</div>
+    
+    <div class="info-panel">
+        <p>Ngân hàng: <b>PVComBank</b></p>
+        <p><b>Ngân hàng TMCP Đại Chúng Việt Nam</b></p>
+        <p>Số tài khoản: <b id="ui-stk">...</b></p>
+        <p>Chủ tài khoản: <b id="ui-name">...</b></p>
+    </div>
+
+    <div id="qrcode-container">
+        <div id="qrcode"></div>
+    </div>
+
+    <div class="note-area">
+        <p>Vui lòng quét QR để tiện thanh toán hoặc nhập nội dung chuyển khoản là:</p>
+        <span class="msg-highlight" id="ui-msg">...</span>
+        <p style="margin-bottom: 0;">để hệ thống thuận tiện kiểm tra. Xin cảm ơn.</p>
+    </div>
+</div>
+
+<div class="btn-grid">
+    <button class="btn" style="background:#2e7d32" onclick="handleAction('dl')">TẢI VỀ</button>
+    <button class="btn" style="background:#1565c0" onclick="handleAction('cp')">COPY</button>
+    <button class="btn" style="background:#e67e22" onclick="handleAction('sh')">GỬI</button>
+</div>
+
+<script>
+    const VietQRUtil = {
+        clean: (s) => s ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[^a-zA-Z0-9 ]/g, '').trim().toUpperCase() : "",
+        crc16: (data) => {
+            let crc = 0xFFFF;
+            for (let i = 0; i < data.length; i++) {
+                crc ^= data.charCodeAt(i) << 8;
+                for (let j = 0; j < 8; j++) {
+                    crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+                }
+            }
+            return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+        },
+        generate: (bin, stk, msg) => {
+            const f = (id, v) => id + String(v).length.toString().padStart(2, '0') + v;
+            const m = f("00", "A000000727") + f("01", f("00", bin) + f("01", stk)) + f("02", "QRIBFTTA");
+            let s = f("00", "01") + f("01", "12") + f("38", m) + f("53", "704") + f("58", "VN");
+            if (msg) s += f("62", f("08", VietQRUtil.clean(msg)));
+            return s + "6304" + VietQRUtil.crc16(s + "6304");
+        }
+    };
+
+    const urlP = new URLSearchParams(window.location.search);
+    const cfg = {
+        bin: "970412",
+        stk: (urlP.get('stk') || '').replace(/\D/g, ''),
+        name: VietQRUtil.clean(urlP.get('name') || ''),
+        msg: VietQRUtil.clean(urlP.get('content') || '')
+    };
+
+    document.getElementById('ui-stk').innerText = cfg.stk;
+    document.getElementById('ui-name').innerText = cfg.name;
+    document.getElementById('ui-msg').innerText = cfg.msg;
+
+    // KÍCH THƯỚC QR ĐƯỢC TĂNG LÊN 280
+    new QRCode(document.getElementById("qrcode"), {
+        text: VietQRUtil.generate(cfg.bin, cfg.stk, cfg.msg),
+        width: 280,
+        height: 280,
+        correctLevel: QRCode.CorrectLevel.M
+    });
+
+    async function handleAction(type) {
+        const card = document.getElementById("payment-card");
+        const canvas = await html2canvas(card, { scale: 3, useCORS: true, backgroundColor: "#ffffff" });
+        const dataUrl = canvas.toDataURL("image/png");
+
+        if (type === 'dl') {
+            const link = document.createElement('a');
+            link.download = `QR_${cfg.stk}.png`;
+            link.href = dataUrl;
+            link.click();
+        } else if (type === 'cp') {
+            canvas.toBlob(blob => {
+                const item = new ClipboardItem({ "image/png": blob });
+                navigator.clipboard.write([item]).then(() => alert("Đã copy!"));
+            });
+        } else if (type === 'sh') {
+            canvas.toBlob(async blob => {
+                const file = new File([blob], 'QR.png', { type: 'image/png' });
+                if (navigator.share) await navigator.share({ files: [file] });
+            });
+        }
+    }
+</script>
+</body>
+</html>
