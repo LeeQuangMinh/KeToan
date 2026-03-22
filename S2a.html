@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Sổ doanh thu S2a-HKD</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* Thiết lập chuẩn in ấn A4 */
+        @page { size: A4; margin: 10mm; }
+        body { font-family: "Times New Roman", serif; color: black; line-height: 1.4; font-size: 11pt; margin: 0; padding: 0; }
+        
+        /* Bảng chính: Bỏ fixed để tự động tối ưu theo chữ */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid black; padding: 6px 4px; word-wrap: break-word; }
+        
+        /* Tỷ lệ cột linh hoạt */
+        .col-sh { width: 18%; }
+        .col-ng { width: 12%; }
+        .col-dg { width: auto; } 
+        .col-st { width: 16%; white-space: nowrap; } /* Cột tiền không cho xuống dòng */
+
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .bold { font-weight: bold; }
+        .italic { font-style: italic; }
+        .no-border, .no-border td { border: none !important; }
+
+        /* Giao diện nút bấm */
+        .no-print { 
+            position: sticky; top: 0; background: #fff; padding: 15px; 
+            border-bottom: 1px solid #ddd; display: flex; gap: 10px; justify-content: center; z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn { cursor: pointer; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; color: white; }
+        .btn-download { background: #d9534f; }
+        .btn-print { background: #555; }
+
+        @media print { 
+            .no-print { display: none; }
+            tfoot { display: table-footer-group; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+        <button class="btn btn-download" onclick="downloadPDF()">TẢI PDF (MẪU CHUẨN)</button>
+        <button class="btn btn-print" onclick="window.print()">IN TRỰC TIẾP</button>
+    </div>
+
+    <div id="content-to-export" style="padding: 10px; background: white;">
+        <table class="no-border">
+            <tr>
+                <td style="width: 65%;">
+                    <div class="bold">HỘ KINH DOANH: <span id="out_ten"></span></div>
+                    <div class="bold">MST: <span id="out_mst"></span></div>
+                    <div class="bold">Địa chỉ: <span id="out_dc"></span></div>
+                </td>
+                <td class="text-right" style="width: 35%; vertical-align: top;">
+                    <div class="bold">Mẫu số S2a-HKD</div>
+                    <div class="italic" style="font-size: 10pt;">(Thông tư số 152/2025/TT-BTC)</div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="text-center" style="margin-top: 15px;">
+            <h2 style="margin:0;">SỔ DOANH THU BÁN HÀNG HÓA, DỊCH VỤ</h2>
+            <div class="bold">Địa điểm kinh doanh: <span id="out_ddkd"></span></div>
+            <div class="bold">Kỳ kê khai: <span id="out_ky"></span></div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th colspan="2">Chứng từ</th>
+                    <th rowspan="2" class="col-dg">Diễn giải</th>
+                    <th rowspan="2" class="col-st">Số tiền</th>
+                </tr>
+                <tr>
+                    <th class="col-sh">Số hiệu (A)</th>
+                    <th class="col-ng">Ngày (B)</th>
+                </tr>
+            </thead>
+            <tbody id="out_body"></tbody>
+            <tfoot>
+                <tr class="bold">
+                    <td colspan="3" class="text-center">TỔNG CỘNG (1)</td>
+                    <td class="text-right" id="out_tong">0</td>
+                </tr>
+                <tr class="bold">
+                    <td colspan="3" class="text-center">Thuế GTGT phải nộp (<span id="out_rate_gtgt">0</span>%)</td>
+                    <td class="text-right" id="out_vat">0</td>
+                </tr>
+                <tr class="bold">
+                    <td colspan="3" class="text-center">Thuế TNCN phải nộp (<span id="out_rate_tncn">0</span>%)</td>
+                    <td class="text-right" id="out_tncn">0</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <table class="no-border" style="margin-top: 40px;">
+            <tr><td colspan="2"></td><td class="italic text-center">Ngày ...... tháng ...... năm 20...</td></tr>
+            <tr class="bold text-center">
+                <td>Người lập biểu</td>
+                <td>Kế toán trưởng</td>
+                <td>Đại diện hộ kinh doanh</td>
+            </tr>
+            <tr style="height: 100px;"><td></td><td></td><td></td></tr>
+        </table>
+    </div>
+
+    <script>
+        let globalData = {};
+        const hashData = window.location.hash.substring(1);
+        
+        if(hashData) {
+            try {
+                globalData = JSON.parse(decodeURIComponent(hashData));
+                document.getElementById('out_ten').innerText = globalData.tenHKD;
+                document.getElementById('out_mst').innerText = globalData.mst;
+                document.getElementById('out_dc').innerText = globalData.diaChi;
+                document.getElementById('out_ddkd').innerText = globalData.diaChi;
+                document.getElementById('out_ky').innerText = `Quý ${globalData.quy} Năm ${globalData.nam}`;
+                
+                // Cập nhật tỷ lệ thuế từ JSON
+                document.getElementById('out_rate_gtgt').innerText = globalData.thueGTGT || 0;
+                document.getElementById('out_rate_tncn').innerText = globalData.thueTNCN || 0;
+
+                let html = ""; let tong = 0;
+                globalData.danhSachDong.forEach(item => {
+                    let st = parseFloat(item.st) || 0;
+                    tong += st;
+                    html += `<tr>
+                        <td class="text-center">${item.sh}</td>
+                        <td class="text-center">${item.ng}</td>
+                        <td>${item.dg}</td>
+                        <td class="text-right">${st.toLocaleString('vi-VN')}</td>
+                    </tr>`;
+                });
+                document.getElementById('out_body').innerHTML = html;
+                document.getElementById('out_tong').innerText = tong.toLocaleString('vi-VN');
+                
+                // Tính toán thuế dựa trên tỷ lệ truyền từ AppSheet
+                let tienGTGT = (tong * (globalData.thueGTGT || 0) / 100);
+                let tienTNCN = (tong * (globalData.thueTNCN || 0) / 100);
+                
+                document.getElementById('out_vat').innerText = tienGTGT.toLocaleString('vi-VN');
+                document.getElementById('out_tncn').innerText = tienTNCN.toLocaleString('vi-VN');
+                
+            } catch (e) { alert("Lỗi dữ liệu!"); }
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('content-to-export');
+            const opt = {
+                margin: [5, 5, 5, 5],
+                filename: `S2b_Q${globalData.quy}_${globalData.nam}.pdf`,
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { 
+                    scale: 2, 
+                    logging: false, 
+                    useCORS: true,
+                    letterRendering: true 
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
