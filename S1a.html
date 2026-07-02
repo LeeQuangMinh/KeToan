@@ -5,6 +5,7 @@
     <title>Sổ chi tiết doanh thu S1a-HKD</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
+        /* Thiết lập chuẩn in ấn A4 */
         @page { size: A4; margin: 10mm; }
         body { font-family: "Times New Roman", serif; color: black; line-height: 1.4; font-size: 11pt; margin: 0; padding: 0; }
         
@@ -23,13 +24,14 @@
         .italic { font-style: italic; }
         .no-border, .no-border td { border: none !important; }
 
+        /* Giao diện nút bấm */
         .no-print { 
             position: sticky; top: 0; background: #fff; padding: 15px; 
             border-bottom: 1px solid #ddd; display: flex; gap: 10px; justify-content: center; z-index: 1000;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .btn { cursor: pointer; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; color: white; }
-        .btn-download { background: #0275d8; } /* Đổi màu xanh dương cho dễ phân biệt với S2b */
+        .btn-download { background: #0275d8; }
         .btn-print { background: #555; }
 
         @media print { 
@@ -62,6 +64,7 @@
 
         <div class="text-center" style="margin-top: 15px;">
             <h2 style="margin:0;">SỔ CHI TIẾT DOANH THU BÁN HÀNG HÓA, DỊCH VỤ</h2>
+            <div class="bold">Địa điểm kinh doanh: <span id="out_ddkd"></span></div>
             <div class="bold">Kỳ kê khai: <span id="out_ky"></span></div>
         </div>
 
@@ -104,32 +107,63 @@
                 document.getElementById('out_ten').innerText = globalData.tenHKD;
                 document.getElementById('out_mst').innerText = globalData.mst;
                 document.getElementById('out_dc').innerText = globalData.diaChi;
-                document.getElementById('out_ky').innerText = `Quý ${globalData.quy} Năm ${globalData.nam}`;
+                document.getElementById('out_ddkd').innerText = globalData.diaChi;
+                
+                // Định dạng hiển thị chuỗi Tháng (EnumList phân tách bằng dấu phẩy)
+                let chuoiThang = String(globalData.thang || "").replace(/\s/g, "");
+                document.getElementById('out_ky').innerText = `Tháng ${chuoiThang} Năm ${globalData.nam}`;
 
-                let html = ""; let tong = 0; let stt = 1;
+                // --- LOGIC GOM DỮ LIỆU CHUẨN THEO NGÀY ---
+                let groupData = {};
                 
                 globalData.danhSachDong.forEach(item => {
+                    // Cắt bỏ khoảng trắng thừa nếu có từ phía AppSheet truyền qua để tránh lỗi gộp ngày
+                    let ngay = String(item.ng).trim();
                     let st = parseFloat(item.st) || 0;
-                    tong += st;
+                    
+                    if (ngay && ngay !== "undefined") {
+                        if (groupData[ngay]) {
+                            groupData[ngay] += st; 
+                        } else {
+                            groupData[ngay] = st;  
+                        }
+                    }
+                });
+
+                // Sắp xếp ngày theo thứ tự tăng dần (định dạng dd/mm/yyyy)
+                let danhSachNgayDaSapXep = Object.keys(groupData).sort((a, b) => {
+                    let partsA = a.split('/');
+                    let partsB = b.split('/');
+                    return new Date(partsA[2], partsA[1] - 1, partsA[0]) - new Date(partsB[2], partsB[1] - 1, partsB[0]);
+                });
+
+                // --- IN DỮ LIỆU RA TABLE ---
+                let html = ""; let tongCong = 0; let stt = 1;
+                
+                danhSachNgayDaSapXep.forEach(ngay => {
+                    let soTienCuaNgay = groupData[ngay];
+                    tongCong += soTienCuaNgay;
+                    
                     html += `<tr>
                         <td class="text-center">${stt++}</td>
-                        <td class="text-center">${item.ng}</td>
-                        <td>${item.dg || ('Doanh thu ngày ' + item.ng)}</td>
-                        <td class="text-right">${st.toLocaleString('vi-VN')}</td>
+                        <td class="text-center">${ngay}</td>
+                        <td>Doanh thu ngày ${ngay}</td>
+                        <td class="text-right">${soTienCuaNgay.toLocaleString('vi-VN')}</td>
                     </tr>`;
                 });
                 
                 document.getElementById('out_body').innerHTML = html;
-                document.getElementById('out_tong').innerText = tong.toLocaleString('vi-VN');
+                document.getElementById('out_tong').innerText = tongCong.toLocaleString('vi-VN');
                 
             } catch (e) { alert("Lỗi dữ liệu sổ S1a!"); }
         }
 
         function downloadPDF() {
             const element = document.getElementById('content-to-export');
+            let txtThang = String(globalData.thang || "").replace(/,/g, "_");
             const opt = {
                 margin: [5, 5, 5, 5],
-                filename: `S1a_Q${globalData.quy}_${globalData.nam}.pdf`,
+                filename: `S1a_Thang${txtThang}_${globalData.nam}.pdf`,
                 image: { type: 'jpeg', quality: 1 },
                 html2canvas: { scale: 2, logging: false, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
