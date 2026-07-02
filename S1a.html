@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Sổ chi tiết doanh thu S1a-HKD</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @page { size: A4; margin: 10mm; }
+        body { font-family: "Times New Roman", serif; color: black; line-height: 1.4; font-size: 11pt; margin: 0; padding: 0; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid black; padding: 8px 6px; word-wrap: break-word; }
+        
+        /* Tỷ lệ cột tối ưu cho sổ theo ngày */
+        .col-stt { width: 10%; }
+        .col-ngay { width: 25%; }
+        .col-diengiai { width: auto; } 
+        .col-sotien { width: 25%; white-space: nowrap; }
+
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .bold { font-weight: bold; }
+        .italic { font-style: italic; }
+        .no-border, .no-border td { border: none !important; }
+
+        .no-print { 
+            position: sticky; top: 0; background: #fff; padding: 15px; 
+            border-bottom: 1px solid #ddd; display: flex; gap: 10px; justify-content: center; z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn { cursor: pointer; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; color: white; }
+        .btn-download { background: #0275d8; } /* Đổi màu xanh dương cho dễ phân biệt với S2b */
+        .btn-print { background: #555; }
+
+        @media print { 
+            .no-print { display: none; }
+            tfoot { display: table-footer-group; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+        <button class="btn btn-download" onclick="downloadPDF()">TẢI PDF S1a</button>
+        <button class="btn btn-print" onclick="window.print()">IN TRỰC TIẾP</button>
+    </div>
+
+    <div id="content-to-export" style="padding: 10px; background: white;">
+        <table class="no-border">
+            <tr>
+                <td style="width: 65%;">
+                    <div class="bold">HỘ KINH DOANH: <span id="out_ten"></span></div>
+                    <div class="bold">MST: <span id="out_mst"></span></div>
+                    <div class="bold">Địa chỉ: <span id="out_dc"></span></div>
+                </td>
+                <td class="text-right" style="width: 35%; vertical-align: top;">
+                    <div class="bold">Mẫu số S1a-HKD</div>
+                    <div class="italic" style="font-size: 10pt;">(Thông tư số 152/2025/TT-BTC)</div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="text-center" style="margin-top: 15px;">
+            <h2 style="margin:0;">SỔ CHI TIẾT DOANH THU BÁN HÀNG HÓA, DỊCH VỤ</h2>
+            <div class="bold">Kỳ kê khai: <span id="out_ky"></span></div>
+        </div>
+
+        <table>
+            <thead>
+                <tr class="bold text-center">
+                    <th class="col-stt">STT</th>
+                    <th class="col-ngay">Ngày, tháng</th>
+                    <th class="col-diengiai">Diễn giải</th>
+                    <th class="col-sotien">Doanh thu ghi sổ</th>
+                </tr>
+            </thead>
+            <tbody id="out_body"></tbody>
+            <tfoot>
+                <tr class="bold">
+                    <td colspan="3" class="text-center">TỔNG CỘNG</td>
+                    <td class="text-right" id="out_tong">0</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <table class="no-border" style="margin-top: 40px;">
+            <tr><td colspan="2"></td><td class="italic text-center">Ngày ...... tháng ...... năm 20...</td></tr>
+            <tr class="bold text-center">
+                <td>Người lập biểu</td>
+                <td>Kế toán trưởng</td>
+                <td>Đại diện hộ kinh doanh</td>
+            </tr>
+            <tr style="height: 100px;"><td></td><td></td><td></td></tr>
+        </table>
+    </div>
+
+    <script>
+        let globalData = {};
+        const hashData = window.location.hash.substring(1);
+        
+        if(hashData) {
+            try {
+                globalData = JSON.parse(decodeURIComponent(hashData));
+                document.getElementById('out_ten').innerText = globalData.tenHKD;
+                document.getElementById('out_mst').innerText = globalData.mst;
+                document.getElementById('out_dc').innerText = globalData.diaChi;
+                document.getElementById('out_ky').innerText = `Quý ${globalData.quy} Năm ${globalData.nam}`;
+
+                let html = ""; let tong = 0; let stt = 1;
+                
+                globalData.danhSachDong.forEach(item => {
+                    let st = parseFloat(item.st) || 0;
+                    tong += st;
+                    html += `<tr>
+                        <td class="text-center">${stt++}</td>
+                        <td class="text-center">${item.ng}</td>
+                        <td>${item.dg || ('Doanh thu ngày ' + item.ng)}</td>
+                        <td class="text-right">${st.toLocaleString('vi-VN')}</td>
+                    </tr>`;
+                });
+                
+                document.getElementById('out_body').innerHTML = html;
+                document.getElementById('out_tong').innerText = tong.toLocaleString('vi-VN');
+                
+            } catch (e) { alert("Lỗi dữ liệu sổ S1a!"); }
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('content-to-export');
+            const opt = {
+                margin: [5, 5, 5, 5],
+                filename: `S1a_Q${globalData.quy}_${globalData.nam}.pdf`,
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { scale: 2, logging: false, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
